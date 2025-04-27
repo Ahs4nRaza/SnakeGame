@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-
-namespace SnakeGame
+﻿namespace SnakeGame
 {
     internal class Game
     {
@@ -11,9 +8,13 @@ namespace SnakeGame
         private Snake snake;
         private Coordinate applePos;
         private int score;
+        private string playerName;
+        private HighScoreManager highScoreManager;
+        private bool gameHasEnded = false;
 
         public Game()
         {
+            highScoreManager = new HighScoreManager();
             snake = new Snake(new Coordinate(10, 1));
             SpawnApple();
             score = 0;
@@ -26,11 +27,82 @@ namespace SnakeGame
         {
             while (true)
             {
+                Console.Clear();
+                ShowMainMenu();
+
+                var key = Console.ReadKey(true).Key;
+                switch (key)
+                {
+                    case ConsoleKey.D1:
+                        StartGame();
+                        break;
+                    case ConsoleKey.D2:
+                        ViewHighScores();
+                        break;
+                    case ConsoleKey.D3:
+                        return; // Exit the game
+                }
+            }
+        }
+
+        private void ShowMainMenu()
+        {
+            Console.WriteLine("Snake Game");
+            Console.WriteLine("1. Start Game");
+            Console.WriteLine("2. View High Scores");
+            Console.WriteLine("3. Quit");
+            Console.Write("Select an option: ");
+        }
+
+        private void StartGame()
+        {
+            Console.Clear();
+
+            // If playerName is empty (it's the first time), ask for the name
+            if (string.IsNullOrEmpty(playerName))
+            {
+                while (true)
+                {
+                    Console.Write("Enter your name (max 15 characters): ");
+                    playerName = Console.ReadLine()?.Trim() ?? string.Empty;
+
+                    if (string.IsNullOrEmpty(playerName))
+                    {
+                        Console.WriteLine("Name cannot be empty. Please enter a valid name.");
+                        continue;
+                    }
+
+                    if (playerName.Length > 15)
+                    {
+                        Console.WriteLine("Name cannot exceed 15 characters. Please enter a shorter name.");
+                        continue;
+                    }
+
+                    break;
+                }
+            }
+
+
+            Console.Clear();
+
+            // Countdown before starting the game
+            Console.WriteLine("Get ready!");
+            for (int i = 3; i > 0; i--)
+            {
+                Console.WriteLine(i);
+                System.Threading.Thread.Sleep(1000);
+            }
+            Console.Clear();
+
+            // Start the game loop
+            while (true)
+            {
                 if (IsCollision())
                 {
+                    highScoreManager.AddHighScore(playerName, score);
+                    gameHasEnded = true;
                     ShowGameOverScreen();
-                    Reset();
-                    continue;
+                    break;
                 }
 
                 // Render game board
@@ -50,6 +122,60 @@ namespace SnakeGame
                 // Wait for next frame and handle key input
                 WaitForNextFrame();
             }
+        }
+
+        private void ShowGameOverScreen()
+        {
+            Console.Clear();
+            Console.WriteLine("Game Over");
+            Console.WriteLine($"Final Score: {score}");
+            Console.WriteLine("1. Restart");
+            Console.WriteLine("2. View High Scores");
+            Console.WriteLine("3. Quit");
+            Console.Write("Select an option: ");
+
+            var key = Console.ReadKey(true).Key;
+            switch (key)
+            {
+                case ConsoleKey.D1:
+                    Reset();
+                    StartGame();
+                    break;
+                case ConsoleKey.D2:
+                    ViewHighScores();
+                    break;
+                case ConsoleKey.D3:
+                    Console.Clear();
+                    Environment.Exit(0); // Exit the game
+                    break; 
+            }
+        }
+
+        private void ViewHighScores()
+        {
+            Console.Clear();
+            Console.WriteLine("High Scores");
+            var highScores = highScoreManager.GetHighScores();
+            int playerNameColumnWidth = 20;
+
+            Console.WriteLine($"{"User".PadRight(playerNameColumnWidth)}Score");
+
+            foreach (var score in highScores)
+            {
+                // Format the player name and score to align properly
+                Console.WriteLine($"{score.PlayerName.PadRight(playerNameColumnWidth)}{score.Score}");
+            }
+
+
+            Console.WriteLine("\nPress any key to return to the menu...");
+            Console.ReadKey(true);
+
+            if (gameHasEnded)
+            {
+                ShowGameOverScreen();
+                return;
+            }
+
         }
 
         private void SpawnApple()
@@ -123,15 +249,6 @@ namespace SnakeGame
             snake = new Snake(new Coordinate(10, 1));
             SpawnApple();
             score = 0;
-        }
-
-        private void ShowGameOverScreen()
-        {
-            Console.Clear();
-            Console.WriteLine("Game Over");
-            Console.WriteLine($"Final Score: {score}");
-            Console.WriteLine("Press any key to restart...");
-            Console.ReadKey(true); // Wait for user input before restarting
         }
     }
 }
