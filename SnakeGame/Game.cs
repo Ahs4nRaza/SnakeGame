@@ -1,9 +1,12 @@
-﻿namespace SnakeGame
+﻿using DotNetEnv;
+ 
+
+namespace SnakeGame
 {
     internal class Game
     {
-        private readonly int frameDelayMs = 100;
-        private readonly Coordinate gridSize = new(50, 20);
+        private readonly int frameDelayMs;
+        private readonly Coordinate gridSize;
         private readonly Random random = new();
         private Snake snake;
         private Coordinate applePos;
@@ -14,6 +17,15 @@
 
         public Game()
         {
+            // Load environment variables from .env file
+            Env.Load();
+
+            // Read values from environment variables
+            frameDelayMs = int.Parse(Env.GetString("FRAME_DELAY_MS", "100"));
+            gridSize = new Coordinate(
+                int.Parse(Env.GetString("GRID_WIDTH", "50")),
+                int.Parse(Env.GetString("GRID_HEIGHT", "20"))
+            );
             highScoreManager = new HighScoreManager();
             snake = new Snake(new Coordinate(10, 1));
             SpawnApple();
@@ -72,7 +84,7 @@
                         continue;
                     }
 
-                    if (playerName.Length > 15)
+                    if (playerName.Length > int.Parse(Env.GetString("MAX_PLAYER_NAME_LENGTH", "15")))
                     {
                         Console.WriteLine("Name cannot exceed 15 characters. Please enter a shorter name.");
                         continue;
@@ -81,7 +93,6 @@
                     break;
                 }
             }
-
 
             Console.Clear();
 
@@ -147,7 +158,7 @@
                 case ConsoleKey.D3:
                     Console.Clear();
                     Environment.Exit(0); // Exit the game
-                    break; 
+                    break;
             }
         }
 
@@ -166,7 +177,6 @@
                 Console.WriteLine($"{score.PlayerName.PadRight(playerNameColumnWidth)}{score.Score}");
             }
 
-
             Console.WriteLine("\nPress any key to return to the menu...");
             Console.ReadKey(true);
 
@@ -175,7 +185,6 @@
                 ShowGameOverScreen();
                 return;
             }
-
         }
 
         private void SpawnApple()

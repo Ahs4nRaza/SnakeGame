@@ -1,9 +1,20 @@
-﻿namespace SnakeGame
+﻿using DotNetEnv;
+using System.IO;
+using System.Linq;
+
+namespace SnakeGame
 {
     internal class HighScoreManager
     {
-        private const string ScoreFileName = "Scores.txt";
-        private const int MaxHighScores = 5;
+        // Load the values from environment variables (defaulting to hardcoded values if not present)
+        private static readonly string ScoreFileName = Env.GetString("SCORE_FILE_PATH", "highscores.txt");
+        private static readonly int MaxHighScores = Env.GetInt("MAX_HIGH_SCORES", 5);
+
+        static HighScoreManager()
+        {
+            // Load environment variables at the start of the application
+            Env.Load();
+        }
 
         private static string GetRootDirectory()
         {
@@ -57,7 +68,7 @@
 
             highScores.Add((playerName, score));
 
-            // Sort the scores in descending order and keep the top 5
+            // Sort the scores in descending order and keep the top "MaxHighScores"
             highScores = highScores.OrderByDescending(x => x.Score).Take(MaxHighScores).ToList();
 
             // Write the updated high scores back to the file
